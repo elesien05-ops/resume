@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Muhammadaziz Anvarov — Digital Marketer</title>
+
+  <!-- Google Fonts: a grotesque sans for structure + a warmer serif for the "About" voice -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Ambient background: soft moving gradient blobs behind the glass, purely decorative -->
+  <div class="bg-field" aria-hidden="true">
+    <span class="blob blob--one"></span>
+    <span class="blob blob--two"></span>
+    <span class="blob blob--three"></span>
+    <div class="noise"></div>
+  </div>
+
+  <!-- Everything below is rendered by index.js from the RESUME_DATA object -->
+  <div class="page" id="page">
+    <p class="loading-note" id="loadingNote">Loading resume…</p>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>
