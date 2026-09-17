@@ -10,7 +10,7 @@ const RESUME_DATA = {
   age: 16,
   title: "Digital Marketer",
   photo:
-    "https://placehold.co/480x480/1a1d2e/9fb4ff?text=M.A.&font=montserrat",
+    "https://i.ibb.co/NgbPQ6Rm/5287513657082323227-120.jpg",
 
   contact: {
     phone: "+123-456-7890",
