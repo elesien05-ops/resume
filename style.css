@@ -11,7 +11,7 @@
   --glass-bg-strong: rgba(255, 255, 255, 0.07);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-border-hover: rgba(154, 178, 255, 0.45);
-  --glass-blur: 18px;
+  --glass-blur: 10px;
 
   /* --- Accents: indigo (analytics / trust) + magenta (campaign / energy) --- */
   --accent-1: #6c8cff;
@@ -110,38 +110,39 @@ a {
 .blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
+  /* A smaller blur radius costs far less to recompute every animation
+     frame than the original 90px — large blurs under moving elements are
+     the single biggest cause of jank behind backdrop-filter glass. */
+  filter: blur(50px);
   opacity: 0.35;
   will-change: transform;
+  transform: translateZ(0);
 }
 
 .blob--one {
-  width: 46vw;
-  height: 46vw;
+  width: 40vw;
+  height: 40vw;
+  max-width: 520px;
+  max-height: 520px;
   top: -12%;
   left: -10%;
   background: var(--accent-1);
-  animation: drift1 26s ease-in-out infinite;
+  animation: drift1 34s ease-in-out infinite;
 }
 
 .blob--two {
-  width: 38vw;
-  height: 38vw;
+  width: 32vw;
+  height: 32vw;
+  max-width: 440px;
+  max-height: 440px;
   bottom: -14%;
   right: -8%;
   background: var(--accent-2);
-  animation: drift2 32s ease-in-out infinite;
+  animation: drift2 40s ease-in-out infinite;
 }
 
-.blob--three {
-  width: 26vw;
-  height: 26vw;
-  bottom: 20%;
-  left: 30%;
-  background: #7c5cff;
-  opacity: 0.2;
-  animation: drift1 22s ease-in-out infinite reverse;
-}
+/* Third decorative blob removed — it added a third overlapping blurred
+   layer for very little visual gain but a real, measurable frame cost. */
 
 @keyframes drift1 {
   0%, 100% { transform: translate(0, 0) scale(1); }
@@ -173,20 +174,26 @@ a {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset,
     0 20px 40px -24px rgba(0, 0, 0, 0.6);
   overflow: hidden;
   opacity: 0;
-  transform: translateY(14px);
+  transform: translateY(14px) translateZ(0);
+  /* Isolates repaint/layout to this element only, and hints the browser to
+     put it on its own GPU layer — this is what actually stops the janky
+     stutter, since without it every animated background blob behind a
+     blurred glass card forces the whole page to repaint each frame. */
+  contain: layout paint style;
+  will-change: transform, opacity;
   transition: transform 0.6s var(--ease-out), opacity 0.6s var(--ease-out),
     box-shadow 0.35s var(--ease-out), border-color 0.35s var(--ease-out);
 }
 
 .glass.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) translateZ(0);
 }
 
 /* Cursor-tracked glow: a radial gradient pinned to --mx/--my (set by JS on
@@ -210,7 +217,7 @@ a {
 }
 
 .glass:hover {
-  transform: translateY(-5px);
+  transform: translateY(-5px) translateZ(0);
   border-color: var(--glass-border-hover);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset,
     0 0 0 1px var(--accent-1-soft), 0 28px 50px -20px rgba(108, 140, 255, 0.35);
