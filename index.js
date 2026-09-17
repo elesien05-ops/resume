@@ -414,36 +414,81 @@ function setupRevealAnimations() {
 
 // 2) Pointer-tracked glow: every glass card exposes CSS custom properties
 //    (--mx / --my) that a radial-gradient in style.css uses to draw a soft
-//    light following the cursor. Pure CSS reads these; JS just updates them.
+//    light following the cursor.
+//
+//    Performance note: the original version attached one "pointermove"
+//    listener per card, each doing a synchronous getBoundingClientRect()
+//    (forces layout) and a style write on every single mouse pixel of
+//    movement. With several glass cards on screen that's many forced
+//    layouts per frame — the main cause of stutter, especially on
+//    integrated GPUs. This version uses ONE delegated listener on the
+//    page and batches the actual style write into a single
+//    requestAnimationFrame callback, so the DOM is only touched once per
+//    frame no matter how fast the mouse moves.
 function setupPointerGlow() {
-  const cards = document.querySelectorAll(".glass");
+  let pendingEvent = null;
+  let rafId = null;
 
-  cards.forEach((card) => {
-    card.addEventListener("pointermove", (e) => {
+  function applyGlow() {
+    rafId = null;
+    if (!pendingEvent) return;
+    const card = pendingEvent.target.closest(".glass");
+    if (card) {
       const rect = card.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      const x = ((pendingEvent.clientX - rect.left) / rect.width) * 100;
+      const y = ((pendingEvent.clientY - rect.top) / rect.height) * 100;
       card.style.setProperty("--mx", `${x}%`);
       card.style.setProperty("--my", `${y}%`);
-    });
-  });
+    }
+    pendingEvent = null;
+  }
+
+  document.addEventListener(
+    "pointermove",
+    (e) => {
+      pendingEvent = e;
+      if (rafId === null) {
+        rafId = requestAnimationFrame(applyGlow);
+      }
+    },
+    { passive: true }
+  );
 }
 
 // 3) Subtle 3D tilt on the profile photo only — one deliberate moment of
 //    "high-level micro-interaction" rather than scattering the effect
-//    across every card.
+//    across every card. Also batched to one requestAnimationFrame write
+//    per frame instead of one per raw mouse-move event.
 function setupProfileTilt() {
   const wrap = document.querySelector(".profile-photo-wrap");
   if (!wrap) return;
 
-  wrap.addEventListener("pointermove", (e) => {
+  let pendingEvent = null;
+  let rafId = null;
+
+  function applyTilt() {
+    rafId = null;
+    if (!pendingEvent) return;
     const rect = wrap.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width - 0.5;
-    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    const px = (pendingEvent.clientX - rect.left) / rect.width - 0.5;
+    const py = (pendingEvent.clientY - rect.top) / rect.height - 0.5;
     wrap.style.transform = `rotateY(${px * 14}deg) rotateX(${-py * 14}deg)`;
-  });
+    pendingEvent = null;
+  }
+
+  wrap.addEventListener(
+    "pointermove",
+    (e) => {
+      pendingEvent = e;
+      if (rafId === null) {
+        rafId = requestAnimationFrame(applyTilt);
+      }
+    },
+    { passive: true }
+  );
 
   wrap.addEventListener("pointerleave", () => {
+    pendingEvent = null;
     wrap.style.transform = "rotateY(0deg) rotateX(0deg)";
   });
 }
